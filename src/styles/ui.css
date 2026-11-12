@@ -1,0 +1,2184 @@
+/* =========================================================================
+   Gravity Slash — gaya layar dan komponen.
+   Semua warna, font, dan jarak berasal dari `tokens.css`.
+   Arah desain: arkade malam. Angka adalah bintang utamanya.
+   ========================================================================= */
+
+/* === Latar statis (cadangan saat gerak dikurangi atau WebGL gagal) ====== */
+.backdrop {
+  width: 100%;
+  height: 100%;
+}
+
+.backdrop--astral {
+  background:
+    radial-gradient(1.5px 1.5px at 12% 22%, rgba(240, 240, 240, 0.85), transparent 60%),
+    radial-gradient(1.5px 1.5px at 68% 14%, rgba(240, 240, 240, 0.6), transparent 60%),
+    radial-gradient(1.5px 1.5px at 42% 68%, rgba(71, 46, 151, 0.75), transparent 60%),
+    radial-gradient(1.5px 1.5px at 84% 52%, rgba(255, 119, 188, 0.7), transparent 60%),
+    radial-gradient(1.5px 1.5px at 24% 84%, rgba(240, 240, 240, 0.5), transparent 60%),
+    radial-gradient(120% 90% at 50% 0%, rgba(71, 46, 151, 0.28), transparent 65%), var(--bg);
+}
+
+.backdrop--waves {
+  background:
+    repeating-linear-gradient(115deg, rgba(71, 46, 151, 0.2) 0 2px, transparent 2px 14px),
+    radial-gradient(120% 90% at 50% 110%, rgba(240, 240, 240, 0.1), transparent 65%), var(--bg);
+}
+
+.backdrop__canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* Latar statis cadangan untuk Topography (React Bits) — peta kontur sederhana.
+   Dipakai saat gerak dikurangi, WebGL gagal, atau WebGL2 tidak tersedia
+   (komponennya merender kosong di WebGL1). Tidak pernah kosong. */
+.backdrop--topography {
+  background:
+    repeating-radial-gradient(
+      circle at 50% 84%,
+      rgba(172, 161, 208, 0.16) 0 1px,
+      transparent 1px 28px
+    ),
+    repeating-radial-gradient(
+      circle at 18% 24%,
+      rgba(240, 240, 240, 0.07) 0 1px,
+      transparent 1px 46px
+    ),
+    radial-gradient(120% 90% at 50% 112%, rgba(71, 46, 151, 0.35), transparent 62%), var(--bg);
+}
+
+/* Latar statis cadangan untuk GradientASCII (React Bits) — kisi karakter yang
+   meredup, jadi permukaan tetap terisi saat versi kanvas tidak jalan. */
+.backdrop--ascii {
+  background:
+    repeating-linear-gradient(0deg, rgba(240, 240, 240, 0.05) 0 1px, transparent 1px 22px),
+    repeating-linear-gradient(90deg, rgba(240, 240, 240, 0.04) 0 1px, transparent 1px 16px),
+    radial-gradient(105% 80% at 50% 62%, rgba(255, 119, 188, 0.2), transparent 60%),
+    radial-gradient(120% 90% at 50% 0%, rgba(71, 46, 151, 0.38), transparent 65%), var(--bg);
+}
+
+/* Latar statis cadangan untuk GhostFibers (React Bits) — serat cahaya violet
+   ke pink yang membeku. Dipakai saat gerak dikurangi, WebGL gagal, atau WebGL2
+   tidak ada (komponennya merender kosong di WebGL1). Tidak pernah kosong. */
+.backdrop--fibers {
+  background:
+    radial-gradient(120% 90% at 22% 26%, rgba(71, 46, 151, 0.74), transparent 62%),
+    radial-gradient(95% 75% at 78% 74%, rgba(255, 119, 188, 0.56), transparent 66%),
+    radial-gradient(70% 60% at 62% 18%, rgba(240, 240, 240, 0.16), transparent 68%), var(--bg);
+}
+
+/* Latar statis cadangan untuk FluxLines (React Bits) — aliran violet→pink yang
+   membeku. Dipakai saat gerak dikurangi, WebGL gagal, atau WebGL2 tidak ada
+   (komponennya hanya menggambar di WebGL2). Tidak pernah kosong. */
+.backdrop--flux {
+  background:
+    radial-gradient(120% 95% at 30% 22%, rgba(71, 46, 151, 0.7), transparent 64%),
+    radial-gradient(100% 80% at 74% 78%, rgba(255, 119, 188, 0.45), transparent 66%), var(--bg);
+}
+
+/* FluxLines bergerak, jadi isinya diberi selubung lebih tegas daripada Ghost
+   Fibers: garis-garisnya tipis dan terang, dan teks GAME OVER serta panel skor
+   harus tetap terbaca (WCAG AA) saat garis melintas di belakangnya. */
+.backdrop--flux::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      125% 100% at 50% 46%,
+      transparent 38%,
+      color-mix(in srgb, var(--bg) 58%, transparent) 100%
+    ),
+    color-mix(in srgb, var(--bg) 26%, transparent);
+}
+
+/* Selubung tipis di atas Topography dan Gradient ASCII: menurunkan kontras
+   animasi supaya teks dan panel tetap terbaca (WCAG AA), sekaligus memberi
+   kedalaman. */
+.backdrop--topography::after,
+.backdrop--ascii::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      120% 95% at 50% 45%,
+      transparent 42%,
+      color-mix(in srgb, var(--bg) 62%, transparent) 100%
+    ),
+    color-mix(in srgb, var(--bg) 22%, transparent);
+}
+
+/* Ghost Fibers justru harus TERLIHAT: hanya diberi vignette tipis di tepi,
+   tanpa lapisan perata di tengah, supaya warna serat violet→pink tidak pudar.
+   Teks tetap aman karena tepi layar tetap menggelap. */
+.backdrop--fibers::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    135% 105% at 50% 46%,
+    transparent 58%,
+    color-mix(in srgb, var(--bg) 55%, transparent) 100%
+  );
+}
+
+.glyph-rain {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.5;
+}
+
+/* Bidang yang menangkap gerakan iris (layar berbidik) */
+.screen--interactive {
+  cursor: crosshair;
+  touch-action: none;
+}
+
+/* === Nama produk ========================================================
+   Dipakai di gerbang kamera: nama produk ditulis sebagai tanda, bukan
+   sebagai label kecil bertracking lebar di atas judul. */
+.wordmark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.1rem, 2vw, 1.4rem);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.wordmark__accent {
+  color: var(--accent-2);
+}
+
+/* === Gerbang kamera ==================================================== */
+.gate__status {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--danger);
+  background: var(--danger-soft);
+  max-width: 52ch;
+}
+
+.gate__status--requesting {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.gate__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: center;
+}
+
+/* === Pembuka ===========================================================
+   Kesan pertama: nama produk di atas medan astral. Sejak 7 Nov 2026 kamera
+   menyala di sini, jadi wordmark adalah target tahan (bukan seluruh bidang)
+   dan pratinjau kecil membantu pemain mengarahkan telunjuk. Klik tetap
+   memulai agar mouse tidak pernah buntu. */
+.opening {
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.opening__content {
+  position: relative;
+  z-index: var(--z-content);
+  flex: 1;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-4);
+  padding: clamp(1.5rem, 4vw, 4rem) clamp(1.25rem, 5vw, 3rem);
+  text-align: center;
+}
+
+.opening__start {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+
+.opening__wordmark {
+  font-size: clamp(2.4rem, 9vw, 5.6rem);
+}
+
+.opening__hint {
+  font-size: var(--fs-small);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 2px solid transparent;
+  padding-bottom: 2px;
+  transition:
+    color var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+
+.opening__start:hover .opening__hint,
+.opening__start:focus-visible .opening__hint {
+  color: var(--text);
+  border-bottom-color: var(--accent-2);
+}
+
+.opening__start:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -6px;
+}
+
+.opening__stage {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  min-height: 3rem;
+}
+
+.opening__stage .camera-preview {
+  position: static;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Peringatan privasi di layar pertama (dipindah dari gerbang kamera 7 Nov
+   2026). Diberi selubung lembut agar kontras teks tetap AA di atas serat yang
+   bergerak, dan diletakkan di alur dokumen supaya tidak menimpa pratinjau. */
+.opening__privacy {
+  position: relative;
+  z-index: var(--z-content);
+  align-self: center;
+  margin: 0 var(--space-4) max(var(--space-4), var(--safe-bottom));
+  max-width: 62ch;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  color: var(--text);
+  text-align: center;
+  pointer-events: none;
+}
+
+@keyframes opening-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .opening__wordmark,
+  .opening__hint {
+    animation: opening-rise 620ms var(--ease-out) both;
+  }
+
+  .opening__hint {
+    animation-delay: 220ms;
+  }
+}
+
+/* === Uji tangan ========================================================
+   Layar antara pembuka dan menu (permintaan pemilik produk, 7 Nov 2026):
+   peringatan privasi sudah di layar pembuka, jadi di sini pemain hanya mencoba
+   bidik. Pratinjau kamera besar di tengah sumbu, bilah tahan di bawahnya, dan
+   jalur tanpa kamera tetap tersedia. */
+.handtest {
+  /* Konten boleh memanjang di jendela sangat pendek (misal pesan galat kamera);
+     tanpa ini bagian bawah terpotong dan tidak bisa dijangkau. */
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.handtest__content {
+  position: relative;
+  z-index: var(--z-content);
+  min-height: 100dvh;
+  max-width: 60ch;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: clamp(1.5rem, 4vw, 4rem);
+  text-align: center;
+}
+
+.handtest__title {
+  font-size: clamp(2rem, 5.5vw, 3.4rem);
+  letter-spacing: -0.01em;
+}
+
+.handtest__lead {
+  max-width: 46ch;
+  color: var(--text-muted);
+}
+
+.handtest__stage {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  min-height: 4.5rem;
+}
+
+.menu__camera {
+  display: grid;
+  justify-items: center;
+}
+
+.menu__camera .camera-preview {
+  position: static;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.handtest__stage .camera-preview {
+  position: static;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Bilah tahan: pemain menahan tangan dan bilah terisi dari kiri. Pink adalah
+   satu-satunya warna aksi (sama seperti tombol utama), jadi "tahan sampai
+   penuh" terbaca sebagai tindakan, bukan hiasan. */
+.hold-meter {
+  width: min(100%, 34ch);
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+}
+
+.hold-meter__track {
+  width: 100%;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-white) 16%, transparent);
+  overflow: hidden;
+}
+
+.hold-meter__fill {
+  display: block;
+  height: 100%;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: var(--accent-2);
+}
+
+.hold-meter__done {
+  color: var(--accent-2);
+}
+
+/* Bilah tahan di dalam tombol target (pembuka & Lanjut). Di luar `.hold-meter`
+   span tidak otomatis jadi blok, jadi lebarnya ditulis eksplisit. */
+.opening__hold,
+.handtest__hold {
+  display: block;
+  width: min(100%, 26ch);
+}
+
+.handtest__next {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+}
+
+/* === Intro =============================================================
+   Komposisi 60-30-10: 60% bidang violet (dominan, dari --bg), 30% bidang
+   putih (pendukung), 10% garis pink (aksen). Semua bidang datar tanpa gradien. */
+.intro {
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.intro__field {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-background);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.intro__band,
+.intro__slash {
+  position: absolute;
+}
+
+.intro__band--support {
+  left: -12%;
+  right: -12%;
+  bottom: -18%;
+  height: 72%;
+  background: var(--color-white);
+  opacity: 0.1;
+  clip-path: polygon(0 44%, 100% 0, 100% 100%, 0 100%);
+}
+
+.intro__band--accent {
+  left: -12%;
+  right: -12%;
+  top: 56%;
+  height: 10px;
+  background: var(--accent-2);
+  opacity: 0.48;
+  transform: rotate(-7deg);
+}
+
+.intro__slash {
+  height: 2px;
+  background: var(--accent);
+  transform: rotate(-7deg);
+}
+
+.intro__slash--1 {
+  left: 10%;
+  right: 34%;
+  top: 19%;
+  opacity: 0.22;
+}
+
+.intro__slash--2 {
+  left: 38%;
+  right: 8%;
+  top: 26%;
+  opacity: 0.12;
+}
+
+/* Komposisi ditengahkan dan diperbesar (revisi pemilik produk, 4 Nov 2026):
+   sebelumnya aturan dan bilah progres kecil dan terselip di kiri bawah sehingga
+   terbaca seperti layar loading. Sekarang seluruh blok berdiri di satu sumbu
+   tengah, aturan punya nomor besar, dan bilah progres tebal. Judul tetap
+   beranimasi (Particle Text) — gerak tidak dihapus. */
+.intro__content {
+  position: relative;
+  z-index: var(--z-content);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1.75rem, 5vh, 3.25rem);
+  padding: clamp(1.5rem, 4vw, 4rem);
+  text-align: center;
+}
+
+/* Selubung lembut di belakang konten: dekorasi bidang (band/slash) tetap ada,
+   tetapi teks selalu duduk di bidang yang lebih gelap sehingga kontrasnya aman
+   (WCAG AA) tanpa perlu panel kaca. */
+.intro__content::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    115% 78% at 50% 50%,
+    color-mix(in srgb, var(--bg) 80%, transparent) 0%,
+    color-mix(in srgb, var(--bg) 34%, transparent) 58%,
+    transparent 80%
+  );
+}
+
+.intro__hero {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+}
+
+.intro__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-title);
+  letter-spacing: 0.04em;
+  margin: 0;
+  width: min(1040px, 92vw);
+  min-height: 1.2em;
+  text-align: center;
+}
+
+.intro__title--static {
+  text-align: center;
+}
+
+/* Cadangan saat chunk Particle Text dimuat: memesan tinggi yang sama supaya
+   tidak ada lompatan tata letak, tetapi belum terlihat. Tanpa ini pemain
+   sempat melihat judul statis lalu "dianimasikan ulang" (BUG-013). */
+.intro__title--pending {
+  visibility: hidden;
+}
+
+.intro__brief {
+  display: grid;
+  justify-items: center;
+  gap: clamp(1rem, 2.5vh, 1.75rem);
+  width: min(66ch, 100%);
+}
+
+.intro__sub {
+  color: var(--text);
+  font-size: clamp(1.05rem, 1.8vw, 1.3rem);
+  max-width: 46ch;
+}
+
+.intro__rules {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  width: min(60ch, 100%);
+  text-align: left;
+  color: var(--text-muted);
+}
+
+.intro__rules li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-4);
+  align-items: baseline;
+  padding: var(--space-3) 0;
+  border-top: 1px solid color-mix(in srgb, var(--color-white) 14%, transparent);
+  font-size: clamp(1rem, 1.5vw, 1.15rem);
+}
+
+.intro__rules li:last-child {
+  border-bottom: 1px solid color-mix(in srgb, var(--color-white) 14%, transparent);
+}
+
+.intro__rule-index {
+  min-width: 1.2em;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.5rem, 2.6vw, 2.1rem);
+  line-height: 1;
+  color: var(--accent-2);
+}
+
+.intro__foot {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  width: min(60ch, 100%);
+}
+
+.intro__progress {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-white) 16%, transparent);
+  overflow: hidden;
+}
+
+.intro__progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent-2);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .intro__progress-fill {
+    animation: intro-progress var(--intro-hold, 8200ms) linear forwards;
+  }
+}
+
+@keyframes intro-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* === Menu ==============================================================
+   DUA kolom di layar lebar (revisi pemilik produk, 6 Nov 2026): kolom kiri =
+   identitas + aksi (judul, penjelasan, pratinjau kamera, tombol, fakta), kolom
+   kanan = papan skor sebagai panel tersendiri. Papan dipisah ke kanan supaya
+   angkanya bisa besar tanpa berebut ruang dengan judul dan tombol. Di layar
+   sempit (< 860px) layout kembali satu kolom bertumpuk. Tanpa label kecil di
+   atas judul; hierarki dibawa ukuran dan warna, bukan hiasan. */
+.menu {
+  overflow: hidden;
+}
+
+.menu__grid {
+  position: relative;
+  z-index: var(--z-content);
+  min-height: 100dvh;
+  width: min(1120px, 100%);
+  margin-inline: auto;
+  padding: clamp(2rem, 5vw, 4rem) clamp(1.5rem, 4vw, 3rem);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  gap: clamp(2rem, 5vw, 4rem);
+  align-content: center;
+  align-items: center;
+}
+
+.menu__main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+  text-align: center;
+}
+
+/* Panel papan skor: satu langkah terang di atas bidang, dengan batas dan
+   bayangan supaya terbaca sebagai benda tersendiri — bukan tumpukan teks. */
+.menu__aside {
+  background: color-mix(in srgb, var(--bg-raised) 66%, transparent);
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(14px);
+  padding: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.menu__title {
+  display: grid;
+  justify-items: center;
+  font-size: clamp(2.8rem, 7.5vw, 6.4rem);
+  letter-spacing: -0.01em;
+  line-height: 0.92;
+  text-transform: uppercase;
+}
+
+.menu__title-word--accent {
+  color: var(--accent-2);
+}
+
+.menu__lead {
+  max-width: 42ch;
+  color: var(--text-muted);
+}
+
+.menu__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: center;
+}
+
+.menu__facts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-4) var(--space-6);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.menu__fact {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.menu__fact dt {
+  font-size: var(--fs-small);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.menu__fact dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.menu__board {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: center;
+  width: 100%;
+}
+
+/* Label dan nilai sebaris: label kecil di atas angka besar terbaca sebagai
+   "eyebrow" dan itu pola yang justru ingin dihindari. */
+.menu__best {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--space-2) var(--space-4);
+}
+
+.menu__best-name {
+  color: var(--text-muted);
+}
+
+.menu__aside-label {
+  font-size: var(--fs-small);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.menu__best-score {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2.6rem, 7vw, 5.2rem);
+  line-height: 1;
+  color: var(--text);
+}
+
+/* Ajakan mengalahkan skor terbaik. Pink sama seperti tombol "Main": satu-satunya
+   warna aksi, jadi mata pemain menautkan "yang dikejar" dengan "cara mengejarnya". */
+.menu__challenge {
+  font-size: var(--fs-small);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--accent-2);
+}
+
+.menu__top {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: grid;
+  gap: 2px;
+}
+
+.menu__top-row {
+  display: grid;
+  grid-template-columns: 1.6rem 1fr auto;
+  gap: var(--space-3);
+  align-items: baseline;
+  font-size: var(--fs-small);
+}
+
+.menu__top-rank,
+.menu__top-score {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.menu__top-rank {
+  color: var(--text-faint);
+}
+
+.menu__top-name {
+  overflow-wrap: anywhere;
+}
+
+.menu__camera-note {
+  color: var(--text-muted);
+}
+
+.menu__meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-5);
+  align-items: center;
+}
+
+.menu__dev {
+  position: absolute;
+  left: clamp(1.5rem, 4vw, 4rem);
+  bottom: var(--space-4);
+  color: var(--text-faint);
+}
+
+.link-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* === Game ============================================================== */
+.game {
+  position: relative;
+  height: 100dvh;
+  overflow: hidden;
+  touch-action: none;
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(71, 46, 151, 0.3), transparent 60%),
+    radial-gradient(90% 60% at 50% 112%, rgba(240, 240, 240, 0.1), transparent 65%), var(--bg);
+}
+
+.game__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* === HUD =============================================================== */
+.hud {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-hud);
+  pointer-events: none;
+}
+
+.hud__top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: calc(var(--space-4) + 6px) var(--space-5) var(--space-3);
+}
+
+.hud__side {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 8ch;
+}
+
+.hud__side--end {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.hud__label {
+  font-family: var(--font-display);
+  font-size: var(--fs-small);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.hud__score {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3.4vw, 2.6rem);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.hud__combo {
+  font-size: var(--fs-small);
+  color: var(--accent-2);
+}
+
+.hud__combo--idle {
+  color: var(--text-faint);
+}
+
+.hud__combo-count {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.hud__multiplier {
+  margin-left: var(--space-2);
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-2-soft);
+  color: var(--accent-2);
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.hud__lives {
+  display: flex;
+  gap: 5px;
+  justify-content: flex-end;
+  margin: 0;
+}
+
+.life {
+  display: block;
+  width: 17px;
+  height: 17px;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+
+.life--on {
+  background: var(--accent-2);
+  filter: drop-shadow(0 0 6px var(--accent-2));
+}
+
+.life--off {
+  background: rgba(240, 240, 240, 0.18);
+}
+
+.hud__buttons {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.icon-btn {
+  pointer-events: auto;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-pill);
+  border: var(--border);
+  background: rgba(17, 9, 40, 0.55);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.icon-btn:hover {
+  background: rgba(240, 240, 240, 0.14);
+}
+
+.icon-btn--tiny {
+  width: 32px;
+  height: 32px;
+  font-size: 0.8rem;
+}
+
+/* Soal di tengah layar — paling terbaca, tidak menghalangi iris */
+.hud__question {
+  position: absolute;
+  top: 24%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: baseline;
+  gap: 0.18em;
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--radius-lg);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-question);
+  line-height: 1;
+  white-space: nowrap;
+  text-shadow:
+    0 0 18px rgba(17, 9, 40, 0.95),
+    0 2px 0 rgba(17, 9, 40, 0.9);
+}
+
+.hud__question-eq {
+  color: var(--accent-strong);
+}
+
+.hud__question-wait {
+  font-size: calc(var(--fs-question) * 0.45);
+  color: var(--text-muted);
+}
+
+.hud__timer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 7px;
+  background: rgba(17, 9, 40, 0.72);
+}
+
+.hud__timer-fill {
+  height: 100%;
+  transform-origin: left center;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+}
+
+.hud__timer-fill--low {
+  background: linear-gradient(90deg, var(--accent-2), var(--danger));
+}
+
+.hud__timer-value {
+  position: absolute;
+  right: var(--space-4);
+  top: 11px;
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+}
+
+/* === Flash umpan balik ================================================= */
+.flash {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-overlay);
+  pointer-events: none;
+}
+
+.flash__veil {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+.flash--correct .flash__veil {
+  background: radial-gradient(circle at 50% 45%, var(--accent-soft), transparent 72%);
+}
+
+.flash--heal .flash__veil {
+  background: radial-gradient(circle at 50% 45%, var(--accent-2-soft), transparent 72%);
+}
+
+.flash--wrong .flash__veil,
+.flash--timeout .flash__veil {
+  background: var(--danger-soft);
+}
+
+.flash--bomb .flash__veil {
+  background: var(--danger-soft);
+}
+
+.flash__text {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.4rem, 4.4vw, 3rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+  text-shadow: 0 0 22px rgba(17, 9, 40, 0.9);
+}
+
+.flash--wrong .flash__text,
+.flash--timeout .flash__text {
+  color: color-mix(in srgb, var(--danger) 45%, #ffffff);
+}
+
+.flash--correct .flash__text {
+  color: var(--accent-strong);
+}
+
+.flash--heal .flash__text {
+  color: var(--accent-2);
+}
+
+.flash__penalty {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.6rem, 4vw, 2.6rem);
+  color: color-mix(in srgb, var(--danger) 45%, #ffffff);
+  text-shadow: 0 0 14px rgba(17, 9, 40, 0.9);
+}
+
+.flash__mark {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+}
+
+.flash__mark--bomb {
+  border-color: var(--danger);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .flash__veil {
+    animation: flash-veil 420ms var(--ease-out) forwards;
+  }
+
+  .flash__text {
+    animation: flash-text 420ms var(--ease-out) forwards;
+  }
+
+  .flash__penalty {
+    animation: flash-penalty 620ms var(--ease-out) forwards;
+  }
+}
+
+@keyframes flash-veil {
+  0% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes flash-text {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  22% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes flash-penalty {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.7);
+  }
+  25% {
+    opacity: 1;
+    transform: translate(-50%, -60%) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -130%) scale(1);
+  }
+}
+
+/* === Pratinjau kamera ================================================== */
+.camera-preview {
+  position: absolute;
+  right: var(--space-5);
+  bottom: var(--space-5);
+  z-index: var(--z-hud);
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  pointer-events: auto;
+}
+
+.camera-preview__frame {
+  width: clamp(180px, 15vw, 240px);
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-md);
+  border: var(--border-strong);
+  overflow: hidden;
+  background: #000;
+  box-shadow: var(--shadow-md);
+}
+
+/* Di layar Game kamera meminta 1280×720 (16:9). Bingkai 4:3 + `cover` memotong
+   sisi kiri-kanan, sehingga pemain yang berdiri agak ke tepi hilang dari
+   pratinjau. Bingkai 16:9 + `contain` menampilkan seluruh bidang kamera, dan
+   ukurannya dinaikkan supaya pemain bisa memantau dirinya saat bermain.
+   `:where()` menjaga spesifisitas sama dengan aturan dasar, jadi media query
+   kecil di bawah tetap bisa mengecilkannya. */
+:where(.game) .camera-preview__frame {
+  width: clamp(240px, 22vw, 360px);
+  aspect-ratio: 16 / 9;
+}
+
+.camera-preview--hidden .camera-preview__frame {
+  opacity: 0;
+}
+
+.camera-preview__holder,
+.camera-preview__video {
+  width: 100%;
+  height: 100%;
+}
+
+.camera-preview__video {
+  object-fit: contain;
+  transform: scaleX(-1);
+}
+
+.camera-preview__off {
+  color: var(--text-faint);
+  max-width: 12ch;
+}
+
+/* === Overlay (countdown, jeda, error) ================================== */
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: var(--space-5);
+  background: rgba(17, 9, 40, 0.62);
+  backdrop-filter: blur(6px);
+}
+
+.overlay--countdown {
+  background: transparent;
+  backdrop-filter: none;
+  pointer-events: none;
+}
+
+.overlay__panel {
+  text-align: center;
+  display: grid;
+  gap: var(--space-3);
+  justify-items: center;
+}
+
+.overlay__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: center;
+  margin-top: var(--space-2);
+}
+
+.countdown__number {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(5rem, 22vw, 14rem);
+  line-height: 1;
+  color: var(--accent-2);
+  text-shadow: var(--shadow-glow-2);
+}
+
+.countdown__hint {
+  color: var(--text-muted);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .countdown__number {
+    animation: countdown-pulse 900ms var(--ease-out) infinite;
+  }
+}
+
+@keyframes countdown-pulse {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.06);
+    opacity: 0.55;
+  }
+}
+
+/* === Game over ========================================================= */
+.gameover__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2rem, 8vw, 5rem);
+  letter-spacing: 0.06em;
+  color: var(--text);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.02em;
+}
+
+.gameover__title--static {
+  text-align: center;
+  text-shadow: 0 0 26px var(--danger-soft);
+}
+
+.gameover__panel {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+  max-width: 420px;
+}
+
+.gameover__score {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2.6rem, 9vw, 4.6rem);
+  line-height: 1;
+  color: var(--accent-2);
+}
+
+.gameover__badge {
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: var(--fs-small);
+}
+
+.gameover__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: center;
+}
+
+/* === Input nama ======================================================== */
+.name__title {
+  font-size: var(--fs-h1);
+  max-width: 24ch;
+}
+
+.name__panel {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 520px;
+  text-align: left;
+}
+
+.name__form {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.name__label {
+  font-size: var(--fs-small);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.name__input {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: var(--border-strong);
+  background: rgba(17, 9, 40, 0.6);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.name__input::placeholder {
+  color: var(--text-faint);
+}
+
+.name__warning {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--text);
+  font-size: var(--fs-small);
+}
+
+.name__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* === Leaderboard ======================================================= */
+.leaderboard .screen__content {
+  justify-content: center;
+}
+
+.leaderboard__title {
+  font-size: var(--fs-h1);
+}
+
+.leaderboard__panel {
+  width: min(620px, 100%);
+}
+
+.leaderboard__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+  text-align: left;
+}
+
+.leaderboard__row {
+  display: grid;
+  grid-template-columns: 2.2rem 1fr auto auto;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+}
+
+.leaderboard__row:nth-child(odd) {
+  background: rgba(240, 240, 240, 0.05);
+}
+
+.leaderboard__rank {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--text-faint);
+}
+
+.leaderboard__row:nth-child(1) .leaderboard__rank {
+  color: var(--accent-2);
+}
+
+.leaderboard__row:nth-child(2) .leaderboard__rank,
+.leaderboard__row:nth-child(3) .leaderboard__rank {
+  color: var(--accent);
+}
+
+.leaderboard__name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  overflow-wrap: anywhere;
+}
+
+.leaderboard__score {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+}
+
+.leaderboard__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: center;
+}
+
+/* === Penyesuaian layar kecil =========================================== */
+@media (max-width: 720px) {
+  .hud__top {
+    padding: calc(var(--space-4) + 6px) var(--space-3) var(--space-2);
+  }
+
+  .camera-preview__frame {
+    width: 150px;
+  }
+
+  :where(.game) .camera-preview__frame {
+    width: clamp(160px, 42vw, 220px);
+  }
+
+  .hud__question {
+    top: 20%;
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .leaderboard__row {
+    grid-template-columns: 1.8rem 1fr auto;
+  }
+
+  .leaderboard__date {
+    display: none;
+  }
+}
+
+/* === Preferensi gerak minimal ==========================================
+   `global.css` mematikan semua animasi; di sini kita pastikan umpan balik
+   teks tetap terlihat dan latar animasi tidak dirender sama sekali. */
+@media (prefers-reduced-motion: reduce) {
+  .flash__veil {
+    animation: none !important;
+    opacity: 0;
+  }
+
+  .flash__text,
+  .flash__penalty,
+  .flash__mark,
+  .countdown__number {
+    animation: none !important;
+  }
+
+  /* Bilah durasi intro tidak ada gunanya tanpa animasi. */
+  .intro__progress {
+    display: none;
+  }
+}
+
+/* =========================================================================
+   Kerangka aplikasi dan transisi antar layar.
+   ========================================================================= */
+
+.app {
+  position: relative;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.app__screen {
+  position: absolute;
+  inset: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/*
+ * Tirai iris. Dua bidang penuh layar menyapu dari kanan ke kiri: bidang
+ * pendukung (violet) lebih dulu, bidang aksen (pink) menyusul. Layar baru
+ * dipasang saat tirai menutup penuh, jadi pergantian layar tidak pernah
+ * terasa seperti potongan keras.
+ *
+ * Durasi di sini adalah sumber kebenaran bersama `App.jsx` (`COVER_MS`,
+ * `REVEAL_MS`): waktu tunggu di JS harus SAMA PANJANG atau lebih lama dari
+ * animasi terpanjang, kalau tidak tirai ditarik sebelum sapuannya selesai dan
+ * gerakannya terlihat terpotong. Revisi pemilik produk (4 Nov 2026): sapuan
+ * diperpanjang sedikit supaya tidak terasa menyentak.
+ */
+.sweep {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: none;
+  pointer-events: none;
+}
+
+.sweep--cover,
+.sweep--reveal {
+  display: block;
+}
+
+.sweep__band {
+  position: absolute;
+  inset: 0;
+  transform: translateX(101%);
+}
+
+/* Tirai antar layar: bidang violet yang benar-benar menutup layar, plus bilah
+   pink di atasnya. Sebelumnya bidang ini memakai `--accent` (violet) yang sama
+   dengan layar di belakangnya, jadi sapuannya tidak terlihat (BUG-012). */
+.sweep__band--support {
+  background: var(--bg-raised);
+}
+
+.sweep__band--accent {
+  background: var(--accent-2);
+}
+
+/* Menutup: pendukung 440ms, aksen 350ms + tunda 90ms = 440ms. */
+.sweep--cover .sweep__band--support {
+  animation: sweep-in 440ms var(--ease-in-out) both;
+}
+
+.sweep--cover .sweep__band--accent {
+  animation: sweep-in 350ms var(--ease-in-out) 90ms both;
+}
+
+/* Membuka: pendukung 400ms, aksen 330ms + tunda 70ms = 400ms. */
+.sweep--reveal .sweep__band--support {
+  animation: sweep-out 400ms var(--ease-in-out) both;
+}
+
+.sweep--reveal .sweep__band--accent {
+  animation: sweep-out 330ms var(--ease-in-out) 70ms both;
+}
+
+@keyframes sweep-in {
+  from {
+    transform: translateX(101%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes sweep-out {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-101%);
+  }
+}
+
+/* Masuknya layar baru ikut memudar: tanpa ini isi layar "muncul mendadak"
+   begitu tirai membuka, walau tirai itu sendiri mulus. Dipicu oleh kelas
+   `app--reveal` (lihat `App.jsx`), jadi mulai tepat saat tirai mulai membuka. */
+.app--reveal .app__screen {
+  animation: screen-enter 420ms var(--ease-out) both;
+}
+
+@keyframes screen-enter {
+  from {
+    opacity: 0.4;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Jejak iris yang mengikuti kursor. Murni dekorasi, tidak menangkap klik. */
+.slash-cursor {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* === Foto / selfie (F11, PRD 14) ======================================= */
+.photo {
+  overflow: hidden;
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(71, 46, 151, 0.28), transparent 60%),
+    radial-gradient(90% 60% at 50% 112%, rgba(240, 240, 240, 0.09), transparent 65%), var(--bg);
+}
+
+.photo__content {
+  min-height: 100dvh;
+  display: grid;
+  align-content: center;
+  gap: var(--space-5);
+  width: min(1080px, 100%);
+  margin: 0 auto;
+  padding: clamp(1.25rem, 3vw, 2.5rem);
+}
+
+.photo__head {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 60ch;
+}
+
+.photo__title {
+  font-size: var(--fs-h1);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.photo__lead {
+  color: var(--text-muted);
+}
+
+.photo__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  align-items: start;
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+}
+
+.photo__stage-wrap {
+  display: grid;
+  gap: var(--space-4);
+  justify-items: center;
+}
+
+.photo__stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1 / 1;
+  width: min(100%, 64vh, 560px);
+  max-height: none;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  border: var(--border);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-md);
+}
+
+.photo__video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* cermin selfie, sama seperti hasil foto */
+}
+
+/* Bingkai tempat elemen video ditempelkan. Efek filter dipasang di sini. */
+.photo__frame {
+  position: absolute;
+  inset: 0;
+}
+
+.photo__stage-note {
+  position: relative;
+  z-index: 1;
+  color: var(--text-muted);
+}
+
+.photo__canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.photo__veil {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.photo__countdown {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(17, 9, 40, 0.42);
+}
+
+.photo__count-number {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(4rem, 18vw, 10rem);
+  line-height: 1;
+  color: var(--color-white);
+}
+
+.photo__countdown--pulse .photo__count-number {
+  animation: photo-pulse 1s var(--ease-out) infinite;
+}
+
+@keyframes photo-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(1.14);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.photo__error {
+  display: grid;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--danger);
+  background: var(--danger-soft);
+  color: var(--color-white);
+}
+
+.photo__notice {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--color-white);
+}
+
+.photo__panel {
+  display: grid;
+  gap: var(--space-5);
+  text-align: left;
+  width: 100%;
+}
+
+.photo__group {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.photo__legend {
+  display: block;
+  padding: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-small);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.photo__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.photo__chip,
+.photo__switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  border: var(--border-strong);
+  background: rgba(240, 240, 240, 0.04);
+  cursor: pointer;
+  transition:
+    background var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+
+.photo__chip:hover,
+.photo__switch:hover {
+  background: rgba(240, 240, 240, 0.09);
+}
+
+.photo__chip:focus-within,
+.photo__switch:focus-within {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.photo__chip--on {
+  background: var(--accent-2);
+  border-color: transparent;
+  color: var(--color-night);
+}
+
+.photo__switches {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+
+.photo__switch-mark {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--text-faint);
+}
+
+.photo__switch--on .photo__switch-mark {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+/* Kontrol asli disembunyikan tapi tetap fokusabel (label membawa fokusnya). */
+.photo__chip input,
+.photo__switch input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.photo__input {
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: var(--border-strong);
+  background: rgba(240, 240, 240, 0.04);
+  color: var(--text);
+}
+
+.photo__input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.photo__hint {
+  margin: 0;
+}
+
+.photo__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.photo__actions--wide {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.photo__actions--wide .link-btn {
+  align-self: center;
+}
+
+/* === Penyesuaian layar sedang dan kecil ================================ */
+@media (max-width: 860px) {
+  .menu__grid {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: var(--space-6);
+    padding: clamp(1.5rem, 6vw, 3rem) clamp(1.25rem, 5vw, 2.5rem);
+  }
+
+  .menu__title {
+    font-size: clamp(2.4rem, 12vw, 4rem);
+  }
+
+  .menu__aside {
+    padding-top: var(--space-5);
+  }
+
+  .intro__content {
+    grid-template-rows: minmax(22vh, 1fr) auto;
+    gap: var(--space-5);
+  }
+}
+
+@media (max-width: 860px) {
+  .photo__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* === Kompatibilitas mobile & tablet (iPad) =============================
+ * Target awal demo adalah laptop, jadi tidak ada aturan khusus perangkat
+ * sentuh. Tiga hal yang tidak bisa diturunkan dari layout desktop:
+ *
+ *   1. AREA AMAN — notch, sudut membulat, dan home indicator. Butuh
+ *      `viewport-fit=cover` di index.html supaya `env(safe-area-inset-*)`
+ *      berisi nilai. Semua di sini memakai `max(nilai lama, inset)` sehingga
+ *      desktop (inset = 0) tidak berubah sama sekali.
+ *   2. TARGET SENTUH — minimal 44×44 px (WCAG 2.2 AA, 2.5.8). Hanya berlaku
+ *      di pointer kasar supaya tombol desktop tetap ramping.
+ *   3. TINGGI PENDEK — ponsel lanskap; soal di layar Game digeser naik agar
+ *      tidak bertabrakan dengan baris skor/nyawa.
+ *
+ * Tidak ada hex baru; semua memakai token yang sudah ada.
+ */
+
+/* 1. Area aman */
+.screen__content {
+  padding-top: max(var(--space-6), var(--safe-top));
+  padding-right: max(var(--space-6), var(--safe-right));
+  padding-bottom: max(var(--space-6), var(--safe-bottom));
+  padding-left: max(var(--space-6), var(--safe-left));
+}
+
+.menu__grid {
+  padding-top: max(clamp(2rem, 5vw, 4rem), var(--safe-top));
+  padding-right: max(clamp(1.5rem, 4vw, 3rem), var(--safe-right));
+  padding-bottom: max(clamp(2rem, 5vw, 4rem), var(--safe-bottom));
+  padding-left: max(clamp(1.5rem, 4vw, 3rem), var(--safe-left));
+}
+
+.handtest__content {
+  padding: max(clamp(1.5rem, 4vw, 4rem), var(--safe-top))
+    max(clamp(1.5rem, 4vw, 4rem), var(--safe-right))
+    max(clamp(1.5rem, 4vw, 4rem), var(--safe-bottom))
+    max(clamp(1.5rem, 4vw, 4rem), var(--safe-left));
+}
+
+.photo__content {
+  padding: max(clamp(1.25rem, 3vw, 2.5rem), var(--safe-top))
+    max(clamp(1.25rem, 3vw, 2.5rem), var(--safe-right))
+    max(clamp(1.25rem, 3vw, 2.5rem), var(--safe-bottom))
+    max(clamp(1.25rem, 3vw, 2.5rem), var(--safe-left));
+}
+
+/* Kanvas Game tetap penuh layar (memang diinginkan); hanya HUD yang mundur
+   dari notch dan home indicator. */
+.hud__top {
+  padding-top: max(calc(var(--space-4) + 6px), var(--safe-top));
+  padding-right: max(var(--space-5), var(--safe-right));
+  padding-left: max(var(--space-5), var(--safe-left));
+}
+
+.hud__timer-value {
+  right: max(var(--space-4), var(--safe-right));
+}
+
+.camera-preview {
+  right: max(var(--space-5), var(--safe-right));
+  bottom: max(var(--space-5), var(--safe-bottom));
+}
+
+.menu__dev {
+  left: max(clamp(1.5rem, 4vw, 4rem), var(--safe-left));
+}
+
+/* 2. Target sentuh & perilaku sentuh.
+   `pointer: coarse` = jari; hover tidak ada, jadi bayangan `.btn:hover`
+   yang "terangkat" tidak perlu dipertahankan setelah ketukan. */
+@media (hover: none) and (pointer: coarse) {
+  .icon-btn,
+  .icon-btn--tiny {
+    width: 44px;
+    height: 44px;
+  }
+
+  .btn--small {
+    min-height: 44px;
+  }
+
+  /* Tautan teks tidak punya kotak; beri tinggi ketuk tanpa mengubah tampilan. */
+  .link-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-inline: var(--space-2);
+  }
+
+  .btn:hover {
+    transform: none;
+  }
+}
+
+/* Seleksi teks & menu tekan-panjang tidak ada gunanya saat mengiris. */
+.game {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* 3. Tinggi pendek: ponsel lanskap, atau jendela pendek */
+@media (orientation: landscape) and (max-height: 560px) {
+  .hud__question {
+    top: 14%;
+  }
+
+  .screen__content {
+    gap: var(--space-3);
+    padding-top: max(var(--space-4), var(--safe-top));
+    padding-bottom: max(var(--space-4), var(--safe-bottom));
+  }
+
+  .menu__grid,
+  .handtest__content {
+    padding-top: max(var(--space-4), var(--safe-top));
+    padding-bottom: max(var(--space-4), var(--safe-bottom));
+  }
+
+  .camera-preview__frame {
+    width: 132px;
+  }
+
+  :where(.game) .camera-preview__frame {
+    width: clamp(150px, 26vw, 180px);
+  }
+
+  .gameover__title {
+    font-size: clamp(1.6rem, 5vw, 3rem);
+  }
+
+  /* Layar pembuka di jendela pendek: rapatkan sumbu dan kecilkan pratinjau
+     supaya wordmark, bilah tahan, dan privasi tetap satu layar. */
+  .opening__content {
+    gap: var(--space-3);
+    padding-top: var(--space-4);
+    padding-bottom: var(--space-3);
+  }
+
+  .opening__wordmark {
+    font-size: clamp(2rem, 6vw, 3rem);
+  }
+
+  .opening__privacy {
+    margin-bottom: max(var(--space-2), var(--safe-bottom));
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--fs-small);
+  }
+
+  /* Tinggi 390 px tidak cukup untuk pratinjau + wordmark + privasi. Bidik
+     tetap terlihat lewat crosshair, jadi bingkai kamera disembunyikan di sini
+     sementara pesan status kamera tetap tampil. */
+  .opening__stage .camera-preview {
+    display: none;
+  }
+
+  /* Tinggi 390 px tidak cukup untuk satu kolom penuh (pratinjau + teks +
+     tombol). Di jendela pendek teks dan tombol pindah ke kiri, pratinjau ke
+     kanan, jadi tidak ada yang terpotong. */
+  .handtest__content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    max-width: none;
+    grid-template-areas:
+      'brand stage'
+      'title stage'
+      'lead stage'
+      'alert stage'
+      'actions stage'
+      'help stage'
+      'back stage';
+    align-content: center;
+    justify-items: start;
+    column-gap: var(--space-5);
+    row-gap: var(--space-2);
+    text-align: left;
+  }
+
+  .handtest__brand {
+    grid-area: brand;
+  }
+
+  .handtest__title {
+    grid-area: title;
+    font-size: clamp(1.5rem, 4vw, 2rem);
+  }
+
+  .handtest__lead {
+    grid-area: lead;
+    max-width: 42ch;
+    font-size: var(--fs-small);
+  }
+
+  .handtest__alert {
+    grid-area: alert;
+  }
+
+  .handtest__stage {
+    grid-area: stage;
+    align-self: center;
+  }
+
+  .handtest__actions {
+    grid-area: actions;
+    justify-content: start;
+  }
+
+  .handtest__help {
+    grid-area: help;
+  }
+
+  .handtest__back {
+    grid-area: back;
+  }
+}
+
+/* Ponsel sempit: rapatkan HUD dan pratinjau kamera */
+@media (max-width: 560px) {
+  .hud__top {
+    padding-top: max(calc(var(--space-3) + 4px), var(--safe-top));
+    padding-right: max(var(--space-3), var(--safe-right));
+    padding-left: max(var(--space-3), var(--safe-left));
+  }
+
+  .hud__side {
+    min-width: 6ch;
+  }
+
+  .camera-preview__frame {
+    width: min(132px, 38vw);
+  }
+
+  :where(.game) .camera-preview__frame {
+    width: min(196px, 50vw);
+  }
+
+  .panel {
+    padding: var(--space-5);
+  }
+
+  .photo__stage {
+    width: min(100%, 52vh, 420px);
+  }
+
+  .handtest__content {
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .handtest__title {
+    font-size: clamp(1.7rem, 8vw, 2.4rem);
+  }
+}

@@ -1,0 +1,21 @@
+node_modules
+dist
+dist-ssr
+.env
+.env.local
+.env.*.local
+*.local
+.DS_Store
+.vite
+
+# Berkas model & wasm MediaPipe ikut repo: deploy statis butuh keduanya
+# (lihat TODOLIST T-005 & T-118).
+
+# Bundel tasks-vision di public/vendor/ adalah salinan node_modules yang dibuat
+# otomatis oleh scripts/sync-vendor.mjs (postinstall/predev/prebuild), jadi tidak
+# perlu ikut repo.
+public/vendor/
+
+# Log
+npm-debug.log*
+yarn-error.log*

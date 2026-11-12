@@ -1,0 +1,136 @@
+/*
+ * Token desain Gravity Slash.
+ * Semua warna, font, dan spacing HARUS berasal dari file ini.
+ * Komponen tidak boleh menulis hex langsung (AGENTS.md bagian 6).
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* === Palet: 3 warna utama dari referensi pemilik produk ===============
+   * Hex dikonfirmasi pemilik produk 4 Nov 2026 (revisi): F0F0F0, 472E97,
+   * FF77BC. Ini sumber kebenaran — jangan menambah hex baru tanpa konfirmasi.
+   *
+   * Komposisi 60-30-10 dikonfirmasi pemilik produk (4 Nov 2026):
+   *   60% Galactic Violet #472E97   → bidang dominan (latar)
+   *   30% Marshmallow White #F0F0F0 → pendukung (teks, orb jawaban, tombol sekunder)
+   *   10% Bubblegum Pink #FF77BC    → aksen (aksi utama, combo, nyawa, umpan balik)
+   *
+   * BUG-012 (4 Nov 2026). Sebelumnya `--accent` = #472E97 dipakai sebagai isian
+   * bidang (tombol, bilah, sakelar) sekaligus warna teks DI ATAS bidang violet.
+   * Violet di atas violet hanya 1,16:1 → bentuknya tenggelam, tema terbaca
+   * bertumpuk. Perbaikannya satu-satunya yang bisa dihitung: bidang dibuat gelap
+   * (60% violet gelap), aksen violet dipakai untuk garis/teks di atasnya HARUS
+   * versi terang (turunan violet + putih), dan aksi utama pindah ke pink 10%.
+   * Jadi bukan hex palet baru, hanya turunan yang bisa dibuktikan kontrasnya.
+   */
+  --color-white: #f0f0f0; /* Marshmallow White — 30% pendukung */
+  --color-violet: #472e97; /* Galactic Violet — 60% dominan */
+  --color-pink: #ff77bc; /* Bubblegum Pink — 10% aksen */
+
+  /* Turunan dari palet utama (bukan hex palet baru) */
+  --color-night: #2e1c63; /* #472E97 digelapkan → bidang dominan 60% */
+  --color-violet-lift: #aca1d0; /* #472E97 + putih 55% → violet yang terbaca di atas bidang */
+  --color-danger: #b3001b; /* crimson bahaya, khusus orb bahaya */
+
+  /* === Peran warna ==================================================== */
+  --bg: var(--color-night);
+  --bg-raised: #3f2a87; /* panel: satu langkah terang di atas bidang, bukan setara */
+  --bg-overlay: rgba(17, 9, 40, 0.82);
+
+  --text: var(--color-white);
+  /* Alpha dinaikkan dari 0,64/0,38 karena bidang violet lebih terang dari latar
+     lama; nilai lama jatuh di bawah WCAG AA (4,5:1) untuk teks kecil. */
+  --text-muted: rgba(240, 240, 240, 0.78);
+  --text-faint: rgba(240, 240, 240, 0.66);
+
+  /* `--accent` harus literal (bukan color-mix) karena dibaca JavaScript untuk
+     canvas. Nilainya = turunan violet terang, bukan hex palet. */
+  --accent: var(--color-violet-lift);
+  --accent-strong: #d3c9f6; /* turunan violet + putih, untuk sorotan teks */
+  --accent-soft: rgba(172, 161, 208, 0.2);
+  --accent-2: var(--color-pink);
+  --accent-2-soft: rgba(255, 119, 188, 0.24);
+
+  --danger: var(--color-danger);
+  --danger-soft: color-mix(in srgb, var(--color-danger) 30%, transparent);
+
+  --orb-answer: var(--color-white);
+  --orb-answer-text: #3d2882;
+  --orb-danger: var(--color-danger);
+  --orb-danger-text: #ffffff;
+  --orb-heal: var(--color-pink);
+  --orb-heal-text: var(--color-night); /* teks orb nyawa: violet gelap, bukan cokelat era palet oranye */
+
+  --slash: var(--color-white);
+  --focus: var(--color-pink);
+
+  /* === Tipografi ====================================================== */
+  --font-display:
+    'Chakra Petch', 'Trebuchet MS', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-ui: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --fs-hud: clamp(0.9rem, 1.4vw, 1.05rem);
+  --fs-question: clamp(2.4rem, 9vw, 6rem);
+  --fs-title: clamp(2.6rem, 11vw, 8rem);
+  --fs-h1: clamp(1.9rem, 5vw, 3rem);
+  --fs-body: clamp(1rem, 1.3vw, 1.05rem);
+  --fs-small: clamp(0.85rem, 1.1vw, 0.95rem);
+
+  --lh-tight: 1.05;
+  --lh-body: 1.5;
+  --tracking-wide: 0.14em;
+
+  /* === Ruang & bentuk ================================================ */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+
+  /* Area aman perangkat: notch, sudut membulat, dan home indicator iPad/iPhone.
+     Hanya terisi bila `index.html` memakai `viewport-fit=cover`; di perangkat
+     tanpa inset nilainya 0 sehingga `max()` di ui.css jatuh ke padding lama. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  /* Garis pemisah dinaikkan karena bidang violet lebih terang: nilai lama
+     (0,14 / 0,28) hanya 1,4:1 di atas bidang, jadi tepi panel tenggelam
+     (BUG-012). */
+  --border: 1px solid rgba(240, 240, 240, 0.3);
+  --border-strong: 1px solid rgba(240, 240, 240, 0.4);
+
+  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.42);
+  --shadow-glow: 0 0 24px var(--accent-soft), 0 0 60px rgba(71, 46, 151, 0.2);
+  --shadow-glow-2: 0 0 24px var(--accent-2-soft);
+
+  /* === Gerak ========================================================= */
+  --dur-fast: 120ms;
+  --dur-base: 220ms;
+  --dur-slow: 420ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* Lapisan (z-index) */
+  --z-background: 0;
+  --z-content: 1;
+  --z-hud: 10;
+  --z-overlay: 20;
+  --z-modal: 30;
+}
+
+/* Angka di orb dan timer memakai angka tabular agar tidak "bergoyang" */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
